@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	tidutils "github.com/Financial-Times/transactionid-utils-go"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 // Common type/behaviour definition for an endpoint
@@ -51,7 +51,7 @@ func NewContextFromRequest(r *http.Request) context.Context {
 func ValidateEndpoint(endpoint string) error {
 
 	if !strings.HasPrefix(endpoint, "http://") && !strings.HasPrefix(endpoint, "https://") {
-		return errors.New(fmt.Sprintf("Missing scheme in endpoint: %v", endpoint))
+		return fmt.Errorf("missing scheme in endpoint: %v", endpoint)
 	}
 	_, err := url.ParseRequestURI(endpoint)
 
