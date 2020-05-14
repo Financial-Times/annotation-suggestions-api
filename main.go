@@ -97,6 +97,7 @@ func main() {
 		cCl := fthttp.NewClientBuilder().
 			WithTimeout(10*time.Second).
 			WithSysInfo("PAC", *appSystemCode).
+			WithLogging(log.StandardLogger()).
 			Build()
 		contentAPI, err := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, cCl)
 		if err != nil {
