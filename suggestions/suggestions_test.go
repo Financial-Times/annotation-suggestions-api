@@ -21,7 +21,7 @@ func TestUmbrellaAPI_IsGTGSuccess(t *testing.T) {
 	testServer := mocks.NewUmbrellaTestServer(true)
 	defer testServer.Close()
 
-	umbrellaAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", testServer.URL+"/content/suggest/__gtg", apiKey, http.DefaultClient)
+	umbrellaAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", testServer.URL+"/content/suggest/__gtg", apiKey, http.DefaultClient, http.DefaultClient)
 
 	assert.NoError(t, err)
 
@@ -36,7 +36,7 @@ func TestUmbrellaAPI_IsGTGFailure503(t *testing.T) {
 	testServer := mocks.NewUmbrellaTestServer(false)
 	defer testServer.Close()
 
-	umbrellaAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", testServer.URL+"/content/suggest/__gtg", apiKey, http.DefaultClient)
+	umbrellaAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", testServer.URL+"/content/suggest/__gtg", apiKey, http.DefaultClient, http.DefaultClient)
 
 	assert.NoError(t, err)
 
@@ -55,7 +55,7 @@ func TestUmbrellaAPI_IsGTGFailureInvalidEndpoint(t *testing.T) {
 	testServer := mocks.NewUmbrellaTestServer(false)
 	defer testServer.Close()
 
-	umbrellaAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", ":#", apiKey, http.DefaultClient)
+	umbrellaAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", ":#", apiKey, http.DefaultClient, http.DefaultClient)
 
 	assert.NoError(t, err)
 
@@ -77,7 +77,7 @@ func TestUmbrellaAPI_IsGTGFailureRequestError(t *testing.T) {
 	testServer := mocks.NewUmbrellaTestServer(false)
 	defer testServer.Close()
 
-	umbrellaAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", "__gtg", apiKey, http.DefaultClient)
+	umbrellaAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", "__gtg", apiKey, http.DefaultClient, http.DefaultClient)
 
 	assert.NoError(t, err)
 
@@ -101,7 +101,7 @@ func TestUmbrellaAPI_FetchSuggestions(t *testing.T) {
 	testServer := mocks.NewUmbrellaTestServer(true)
 	defer testServer.Close()
 
-	umbrellaAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", testServer.URL+"/content/suggest/__gtg", apiKey, http.DefaultClient)
+	umbrellaAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", testServer.URL+"/content/suggest/__gtg", apiKey, http.DefaultClient, http.DefaultClient)
 	assert.NoError(t, err)
 
 	suggestions, err := umbrellaAPI.FetchSuggestions(context.Background(), mockDraftContent)
@@ -114,7 +114,7 @@ func TestUmbrellaAPI_FetchDraftContentFailure(t *testing.T) {
 	testServer := mocks.NewUmbrellaTestServer(false)
 	defer testServer.Close()
 
-	contentAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", testServer.URL+"/content/suggest/__gtg", apiKey, http.DefaultClient)
+	contentAPI, err := NewUmbrellaAPI(testServer.URL+"/content/suggest", testServer.URL+"/content/suggest/__gtg", apiKey, http.DefaultClient, http.DefaultClient)
 	assert.NoError(t, err)
 
 	suggestions, err := contentAPI.FetchSuggestions(context.Background(), newMockDraftContent())

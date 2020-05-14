@@ -94,11 +94,16 @@ func main() {
 		log.Infof("[Startup] %s is starting", *appName)
 		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
 
+		// We don't want logging for GTG requests in the middleware
+		healthCl := fthttp.NewClientBuilder().
+			WithTimeout(10*time.Second).
+			WithSysInfo("PAC", *appSystemCode).
+			Build()
 		cCl := fthttp.NewClientBuilder().
 			WithTimeout(10*time.Second).
 			WithSysInfo("PAC", *appSystemCode).
 			Build()
-		contentAPI, err := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, cCl)
+		contentAPI, err := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, cCl, healthCl)
 		if err != nil {
 			log.WithError(err).Error("Draft Content API error, exiting ...")
 			return
@@ -109,7 +114,7 @@ func main() {
 			WithSysInfo("PAC", *appSystemCode).
 			WithLogging(log.StandardLogger()).
 			Build()
-		umbrellaAPI, err := suggestions.NewUmbrellaAPI(*suggestionsEndpoint, *suggestionsGtgEndpoint, *suggestionsAPIKey, uCl)
+		umbrellaAPI, err := suggestions.NewUmbrellaAPI(*suggestionsEndpoint, *suggestionsGtgEndpoint, *suggestionsAPIKey, uCl, healthCl)
 		if err != nil {
 			log.WithError(err).Error("Suggestions Umbrella API error, exiting ...")
 			return

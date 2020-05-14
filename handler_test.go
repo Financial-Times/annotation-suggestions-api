@@ -57,8 +57,8 @@ func handleTestRequest(urlpath string) (resp *http.Response, err error) {
 	defer draftContentTestServer.Close()
 	defer umbrellaTestServer.Close()
 
-	contentAPI, _ := draft.NewContentAPI(draftContentTestServer.URL+"/drafts/content", draftContentTestServer.URL+"/__gtg", http.DefaultClient)
-	umbrellaAPI, _ := suggestions.NewUmbrellaAPI(umbrellaTestServer.URL, umbrellaTestServer.URL+"/__gtg", "12345", http.DefaultClient)
+	contentAPI, _ := draft.NewContentAPI(draftContentTestServer.URL+"/drafts/content", draftContentTestServer.URL+"/__gtg", http.DefaultClient, http.DefaultClient)
+	umbrellaAPI, _ := suggestions.NewUmbrellaAPI(umbrellaTestServer.URL, umbrellaTestServer.URL+"/__gtg", "12345", http.DefaultClient, http.DefaultClient)
 
 	requestHandler := requestHandler{contentAPI, umbrellaAPI}
 
