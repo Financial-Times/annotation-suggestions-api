@@ -24,10 +24,13 @@ import (
 	"github.com/Financial-Times/draft-content-suggestions/suggestions"
 )
 
-const appDescription = "Provides suggestions for draft content."
+const (
+	appDescription = "Provides suggestions for draft content."
+	defaultAppName = "draft-content-suggestions"
+)
 
 func main() {
-	app := cli.App("draft-content-suggestions", appDescription)
+	app := cli.App(defaultAppName, appDescription)
 
 	appSystemCode := app.String(cli.StringOpt{
 		Name:   "app-system-code",
@@ -35,42 +38,36 @@ func main() {
 		Desc:   "System Code of the application",
 		EnvVar: "APP_SYSTEM_CODE",
 	})
-
 	appName := app.String(cli.StringOpt{
 		Name:   "app-name",
-		Value:  "Draft Content Suggestions",
+		Value:  defaultAppName,
 		Desc:   "Application name",
 		EnvVar: "APP_NAME",
 	})
-
 	port := app.String(cli.StringOpt{
 		Name:   "port",
 		Value:  "8080",
 		Desc:   "Port to listen on",
 		EnvVar: "APP_PORT",
 	})
-
 	apiYml := app.String(cli.StringOpt{
 		Name:   "api-yml",
 		Value:  "./api.yml",
 		Desc:   "Location of the OpenAPI YML file.",
 		EnvVar: "API_YML",
 	})
-
 	draftContentEndpoint := app.String(cli.StringOpt{
 		Name:   "draft-content-endpoint",
 		Value:  "http://draft-content-public-read:8080/content",
 		Desc:   "Endpoint for Draft Content API",
 		EnvVar: "DRAFT_CONTENT_ENDPOINT",
 	})
-
 	draftContentGtgEndpoint := app.String(cli.StringOpt{
 		Name:   "draft-content-gtg-endpoint",
 		Value:  "http://draft-content-public-read:8080/__gtg",
 		Desc:   "GTG Endpoint for Draft Content API",
 		EnvVar: "DRAFT_CONTENT_GTG_ENDPOINT",
 	})
-
 	suggestionsEndpoint := app.String(cli.StringOpt{
 		Name:   "suggestions-umbrella-endpoint",
 		Value:  "http://test.api.ft.com/content/suggest",
@@ -83,7 +80,6 @@ func main() {
 		Desc:   "Endpoint for Suggestions Umbrella",
 		EnvVar: "SUGGESTIONS_GTG_ENDPOINT",
 	})
-
 	suggestionsAPIKey := app.String(cli.StringOpt{
 		Name:   "suggestions-api-key",
 		Value:  "",
@@ -93,35 +89,31 @@ func main() {
 
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
-	log.Infof("[Startup] draft-content-suggestions is starting ")
-
-	client := fthttp.NewClientBuilder().
-		WithTimeout(10*time.Second).
-		WithSysInfo("PAC", *appSystemCode).
-		Build()
-
-	umbrellaClient := fthttp.NewClientBuilder().
-		WithTimeout(10*time.Second).
-		WithSysInfo("PAC", *appSystemCode).
-		WithLogging(log.StandardLogger()).
-		Build()
-
-	umbrellaAPI, err := suggestions.NewUmbrellaAPI(*suggestionsEndpoint, *suggestionsGtgEndpoint, *suggestionsAPIKey, umbrellaClient)
-
-	if err != nil {
-		log.WithError(err).Error("Suggestions Umbrella API error, exiting ...")
-		return
-	}
-
-	contentAPI, err := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, client)
-
-	if err != nil {
-		log.WithError(err).Error("Draft Content API error, exiting ...")
-		return
-	}
 
 	app.Action = func() {
+		log.Infof("[Startup] %s is starting", *appName)
 		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
+
+		cCl := fthttp.NewClientBuilder().
+			WithTimeout(10*time.Second).
+			WithSysInfo("PAC", *appSystemCode).
+			Build()
+		contentAPI, err := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, cCl)
+		if err != nil {
+			log.WithError(err).Error("Draft Content API error, exiting ...")
+			return
+		}
+
+		uCl := fthttp.NewClientBuilder().
+			WithTimeout(10*time.Second).
+			WithSysInfo("PAC", *appSystemCode).
+			WithLogging(log.StandardLogger()).
+			Build()
+		umbrellaAPI, err := suggestions.NewUmbrellaAPI(*suggestionsEndpoint, *suggestionsGtgEndpoint, *suggestionsAPIKey, uCl)
+		if err != nil {
+			log.WithError(err).Error("Suggestions Umbrella API error, exiting ...")
+			return
+		}
 
 		go func() {
 			serveEndpoints(*appSystemCode, *appName, *port, apiYml, requestHandler{contentAPI, umbrellaAPI})
@@ -130,9 +122,9 @@ func main() {
 		waitForSignal()
 	}
 
-	err = app.Run(os.Args)
+	err := app.Run(os.Args)
 	if err != nil {
-		log.WithError(err).Error("draft-content-suggestions could not start!")
+		log.WithError(err).Errorf("%s could not start!", defaultAppName)
 		return
 	}
 }
@@ -178,7 +170,7 @@ func serveEndpoints(appSystemCode string, appName string, port string, apiYml *s
 	}()
 
 	waitForSignal()
-	log.Infof("[Shutdown] draft-content-suggestions is shutting down")
+	log.Infof("[Shutdown] %s is shutting down", defaultAppName)
 
 	if err := server.Close(); err != nil {
 		log.WithError(err).Error("Unable to stop http server")
@@ -188,7 +180,7 @@ func serveEndpoints(appSystemCode string, appName string, port string, apiYml *s
 }
 
 func waitForSignal() {
-	ch := make(chan os.Signal)
+	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
 }
