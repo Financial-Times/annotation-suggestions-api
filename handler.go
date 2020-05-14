@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
+	tidutils "github.com/Financial-Times/transactionid-utils-go"
+	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/Financial-Times/draft-content-suggestions/commons"
 	"github.com/Financial-Times/draft-content-suggestions/draft"
 	"github.com/Financial-Times/draft-content-suggestions/suggestions"
-	. "github.com/Financial-Times/transactionid-utils-go"
-	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 )
 
 type requestHandler struct {
@@ -20,13 +21,13 @@ type requestHandler struct {
 func (rh *requestHandler) draftContentSuggestionsRequest(writer http.ResponseWriter, request *http.Request) {
 
 	uuid := mux.Vars(request)["uuid"]
-	logger := log.WithField(TransactionIDKey, GetTransactionIDFromRequest(request)).WithField("uuid", uuid)
+	logger := log.WithField(tidutils.TransactionIDKey, tidutils.GetTransactionIDFromRequest(request)).WithField("uuid", uuid)
 
 	err := commons.ValidateUUID(uuid)
 
 	if err != nil {
 		logger.WithError(err).Warn("Invalid UUID")
-		commons.WriteJSONMessage(writer, http.StatusBadRequest, "Invalid UUID")
+		_ = commons.WriteJSONMessage(writer, http.StatusBadRequest, "Invalid UUID")
 		return
 	}
 
@@ -36,19 +37,19 @@ func (rh *requestHandler) draftContentSuggestionsRequest(writer http.ResponseWri
 
 	if err == draft.ErrDraftNotMappable {
 		log.WithError(err).Info("Could not provide suggestions for content, as we are unable to map it")
-		commons.WriteJSONMessage(writer, http.StatusUnprocessableEntity, "Could not provide suggestions for content, as we are unable to map it")
+		_ = commons.WriteJSONMessage(writer, http.StatusUnprocessableEntity, "Could not provide suggestions for content, as we are unable to map it")
 		return
 	}
 
 	if err != nil {
 		log.WithError(err).Error("Draft content api retrieval has failed.")
-		commons.WriteJSONMessage(writer, http.StatusInternalServerError, "Draft content api retrieval has failed.")
+		_ = commons.WriteJSONMessage(writer, http.StatusInternalServerError, "Draft content api retrieval has failed.")
 		return
 	}
 
 	if content == nil {
 		log.Warn("No draft content found, cannot provide suggestions")
-		commons.WriteJSONMessage(writer, http.StatusNotFound, fmt.Sprintf("No draft content for uuid: %v", uuid))
+		_ = commons.WriteJSONMessage(writer, http.StatusNotFound, fmt.Sprintf("No draft content for uuid: %v", uuid))
 		return
 	}
 
@@ -56,7 +57,7 @@ func (rh *requestHandler) draftContentSuggestionsRequest(writer http.ResponseWri
 
 	if err != nil {
 		log.WithError(err).Error("Suggestions umbrella api access has failed")
-		commons.WriteJSONMessage(writer, http.StatusServiceUnavailable, "Suggestions umbrella api access has failed")
+		_ = commons.WriteJSONMessage(writer, http.StatusServiceUnavailable, "Suggestions umbrella api access has failed")
 		return
 	}
 
