@@ -10,7 +10,7 @@ func (service *HealthService) draftContentCheck() fthealth.Check {
 	return fthealth.Check{
 		BusinessImpact:   "Unable to provide suggestions to editorial for tagging content",
 		Name:             "Draft Content Service Health Check",
-		PanicGuide:       "https://runbooks.in.ft.com/draft-content-suggestions",
+		PanicGuide:       "https://runbooks.ftops.tech/draft-content-suggestions",
 		Severity:         1,
 		TechnicalSummary: "Checks whether the health endpoint of draft-content-api returns successful responses",
 		Checker:          service.draftContentChecker,
@@ -21,7 +21,7 @@ func (service *HealthService) suggestionsCheck() fthealth.Check {
 	return fthealth.Check{
 		BusinessImpact:   "Unable to provide suggestions to editorial for tagging content",
 		Name:             "Suggestions Umbrella Service Health Check",
-		PanicGuide:       "https://runbooks.in.ft.com/draft-content-suggestions",
+		PanicGuide:       "https://runbooks.ftops.tech/draft-content-suggestions",
 		Severity:         1,
 		TechnicalSummary: "Checks whether the suggestions umbrella endpoint is accessible and returns responses",
 		Checker:          service.suggestionsChecker,
