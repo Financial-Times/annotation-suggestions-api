@@ -48,8 +48,7 @@ func NewHealthService(appSystemCode string, appName string,
 		return gtgCheck(hc.suggestionsChecker)
 	}
 
-	var gtgChecks []gtg.StatusChecker
-	gtgChecks = append(hc.gtgChecks, draftContentCheck, suggestionsCheck)
+	gtgChecks := append(hc.gtgChecks, draftContentCheck, suggestionsCheck)
 	hc.gtgChecks = gtgChecks
 	return hc
 }
