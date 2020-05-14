@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Financial-Times/draft-content-suggestions/commons"
+	"github.com/Financial-Times/go-ft-http/fthttp"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,7 +19,6 @@ var (
 )
 
 func NewContentAPI(endpoint string, healthEndpoint string, httpClient *http.Client) (contentAPI ContentAPI, err error) {
-
 	if !strings.HasSuffix(endpoint, "/") {
 		endpoint += "/"
 	}
@@ -29,7 +30,6 @@ func NewContentAPI(endpoint string, healthEndpoint string, httpClient *http.Clie
 	}
 
 	err = contentAPI.IsValid()
-
 	if err != nil {
 		return nil, err
 	}
@@ -51,36 +51,29 @@ type draftContentAPI struct {
 }
 
 func (d *draftContentAPI) FetchDraftContent(ctx context.Context, uuid string) ([]byte, error) {
-
 	requestPath := d.endpoint + uuid
 	request, err := http.NewRequest(http.MethodGet, requestPath, nil)
-
 	if err != nil {
 		return nil, err
 	}
 
 	response, err := d.httpClient.Do(request.WithContext(ctx))
-
 	if err != nil {
 		return nil, err
 	}
-
 	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusNotFound {
 		return nil, nil
 	}
-
 	if response.StatusCode == http.StatusUnprocessableEntity {
 		return nil, ErrDraftNotMappable
 	}
-
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("error in draft content retrival status=%v", response.StatusCode)
 	}
 
 	bytes, err := ioutil.ReadAll(response.Body)
-
 	if err != nil {
 		return nil, err
 	}
@@ -93,20 +86,22 @@ func (d *draftContentAPI) Endpoint() string {
 }
 
 func (d *draftContentAPI) IsGTG(ctx context.Context) (string, error) {
-	request, err := http.NewRequest(http.MethodGet, d.healthEndpoint, nil)
-
+	req, err := http.NewRequest(http.MethodGet, d.healthEndpoint, nil)
 	if err != nil {
 		log.WithError(err).WithField("healthEndpoint", d.healthEndpoint).Error("Error in creating GTG request to draft-content-public-read")
 		return "", err
 	}
 
-	response, err := d.httpClient.Do(request.WithContext(ctx))
-
+	// We don't want logging for GTG requests in the middleware
+	gtgClient := fthttp.NewClientBuilder().
+		WithTimeout(10*time.Second).
+		WithSysInfo("PAC", "draft-content-suggestions").
+		Build()
+	response, err := gtgClient.Do(req.WithContext(ctx))
 	if err != nil {
 		log.WithError(err).WithField("healthEndpoint", d.healthEndpoint).Error("Error in GTG request to draft-content-public-read")
 		return "", err
 	}
-
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
