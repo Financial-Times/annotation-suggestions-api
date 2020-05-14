@@ -99,22 +99,18 @@ func main() {
 			WithTimeout(10*time.Second).
 			WithSysInfo("PAC", *appSystemCode).
 			Build()
-		cCl := fthttp.NewClientBuilder().
+		loggingCl := fthttp.NewClientBuilder().
 			WithTimeout(10*time.Second).
 			WithSysInfo("PAC", *appSystemCode).
+			WithLogging(log.StandardLogger()).
 			Build()
-		contentAPI, err := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, cCl, healthCl)
+		contentAPI, err := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, loggingCl, healthCl)
 		if err != nil {
 			log.WithError(err).Error("Draft Content API error, exiting ...")
 			return
 		}
 
-		uCl := fthttp.NewClientBuilder().
-			WithTimeout(10*time.Second).
-			WithSysInfo("PAC", *appSystemCode).
-			WithLogging(log.StandardLogger()).
-			Build()
-		umbrellaAPI, err := suggestions.NewUmbrellaAPI(*suggestionsEndpoint, *suggestionsGtgEndpoint, *suggestionsAPIKey, uCl, healthCl)
+		umbrellaAPI, err := suggestions.NewUmbrellaAPI(*suggestionsEndpoint, *suggestionsGtgEndpoint, *suggestionsAPIKey, loggingCl, healthCl)
 		if err != nil {
 			log.WithError(err).Error("Suggestions Umbrella API error, exiting ...")
 			return
