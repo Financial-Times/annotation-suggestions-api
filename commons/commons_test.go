@@ -43,8 +43,8 @@ func TestNewContextFromRequest(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, validEndpoint, nil)
 	contextFromRequest := NewContextFromRequest(request)
 
-	trxId, ok := contextFromRequest.Value(transactionidutils.TransactionIDKey).(string)
+	trxID, ok := contextFromRequest.Value(transactionidutils.TransactionIDKey).(string)
 
 	assert.True(t, ok)
-	assert.NotEmpty(t, trxId)
+	assert.NotEmpty(t, trxID)
 }
