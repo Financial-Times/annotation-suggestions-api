@@ -8,18 +8,20 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Financial-Times/api-endpoint"
-	"github.com/Financial-Times/draft-content-suggestions/draft"
-	"github.com/Financial-Times/draft-content-suggestions/health"
-	"github.com/Financial-Times/draft-content-suggestions/suggestions"
+	api "github.com/Financial-Times/api-endpoint"
 	"github.com/Financial-Times/go-ft-http/fthttp"
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
+
 	"github.com/gorilla/mux"
-	"github.com/jawher/mow.cli"
-	"github.com/rcrowley/go-metrics"
+	cli "github.com/jawher/mow.cli"
+	metrics "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/Financial-Times/draft-content-suggestions/draft"
+	"github.com/Financial-Times/draft-content-suggestions/health"
+	"github.com/Financial-Times/draft-content-suggestions/suggestions"
 )
 
 const appDescription = "Provides suggestions for draft content."
