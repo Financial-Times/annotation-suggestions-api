@@ -86,9 +86,20 @@ func main() {
 		Desc:   "API key to access Suggestions Umbrella",
 		EnvVar: "SUGGESTIONS_API_KEY",
 	})
+	logLevel := app.String(cli.StringOpt{
+		Name:   "log-level",
+		Value:  "info",
+		Desc:   "Logging Level",
+		EnvVar: "LOG_LEVEL",
+	})
 
+	lvl, err := log.ParseLevel(*logLevel)
+	if err != nil {
+		log.Warnf("Log level %s could not be parsed, defaulting to info", *logLevel)
+		lvl = log.InfoLevel
+	}
+	log.SetLevel(lvl)
 	log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.InfoLevel)
 
 	app.Action = func() {
 		log.Infof("[Startup] %s is starting", *appName)
@@ -99,9 +110,9 @@ func main() {
 			WithSysInfo("PAC", *appSystemCode).
 			WithLogging(log.StandardLogger()).
 			Build()
-		contentAPI, err := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, cCl)
+		contentAPI, tmpErr := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, cCl)
 		if err != nil {
-			log.WithError(err).Error("Draft Content API error, exiting ...")
+			log.WithError(tmpErr).Error("Draft Content API error, exiting ...")
 			return
 		}
 
@@ -110,9 +121,9 @@ func main() {
 			WithSysInfo("PAC", *appSystemCode).
 			WithLogging(log.StandardLogger()).
 			Build()
-		umbrellaAPI, err := suggestions.NewUmbrellaAPI(*suggestionsEndpoint, *suggestionsGtgEndpoint, *suggestionsAPIKey, uCl)
+		umbrellaAPI, tmpErr := suggestions.NewUmbrellaAPI(*suggestionsEndpoint, *suggestionsGtgEndpoint, *suggestionsAPIKey, uCl)
 		if err != nil {
-			log.WithError(err).Error("Suggestions Umbrella API error, exiting ...")
+			log.WithError(tmpErr).Error("Suggestions Umbrella API error, exiting ...")
 			return
 		}
 
@@ -123,7 +134,7 @@ func main() {
 		waitForSignal()
 	}
 
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
 		log.WithError(err).Errorf("%s could not start!", defaultAppName)
 		return
