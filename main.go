@@ -11,13 +11,13 @@ import (
 	api "github.com/Financial-Times/api-endpoint"
 	"github.com/Financial-Times/go-ft-http/fthttp"
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
-	"github.com/Financial-Times/http-handlers-go/httphandlers"
+	logger "github.com/Financial-Times/go-logger/v2"
+	httphandlers "github.com/Financial-Times/http-handlers-go/v2/httphandlers"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
 
 	"github.com/gorilla/mux"
 	cli "github.com/jawher/mow.cli"
 	metrics "github.com/rcrowley/go-metrics"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/Financial-Times/draft-content-suggestions/draft"
 	"github.com/Financial-Times/draft-content-suggestions/health"
@@ -93,13 +93,7 @@ func main() {
 		EnvVar: "LOG_LEVEL",
 	})
 
-	lvl, err := log.ParseLevel(*logLevel)
-	if err != nil {
-		log.Warnf("Log level %s could not be parsed, defaulting to info", *logLevel)
-		lvl = log.InfoLevel
-	}
-	log.SetLevel(lvl)
-	log.SetFormatter(&log.JSONFormatter{})
+	log := logger.NewUPPLogger(*appSystemCode, *logLevel)
 
 	app.Action = func() {
 		log.Infof("[Startup] %s is starting", *appName)
@@ -108,40 +102,40 @@ func main() {
 		cCl := fthttp.NewClientBuilder().
 			WithTimeout(10*time.Second).
 			WithSysInfo("PAC", *appSystemCode).
-			WithLogging(log.StandardLogger()).
+			WithLogging(log).
 			Build()
-		contentAPI, tmpErr := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, cCl)
+		contentAPI, err := draft.NewContentAPI(*draftContentEndpoint, *draftContentGtgEndpoint, cCl)
 		if err != nil {
-			log.WithError(tmpErr).Error("Draft Content API error, exiting ...")
+			log.WithError(err).Error("Draft Content API error, exiting ...")
 			return
 		}
 
 		uCl := fthttp.NewClientBuilder().
 			WithTimeout(10*time.Second).
 			WithSysInfo("PAC", *appSystemCode).
-			WithLogging(log.StandardLogger()).
+			WithLogging(log).
 			Build()
-		umbrellaAPI, tmpErr := suggestions.NewUmbrellaAPI(*suggestionsEndpoint, *suggestionsGtgEndpoint, *suggestionsAPIKey, uCl)
+		umbrellaAPI, err := suggestions.NewUmbrellaAPI(*suggestionsEndpoint, *suggestionsGtgEndpoint, *suggestionsAPIKey, uCl)
 		if err != nil {
-			log.WithError(tmpErr).Error("Suggestions Umbrella API error, exiting ...")
+			log.WithError(err).Error("Suggestions Umbrella API error, exiting ...")
 			return
 		}
 
 		go func() {
-			serveEndpoints(*appSystemCode, *appName, *port, apiYml, requestHandler{contentAPI, umbrellaAPI})
+			serveEndpoints(*appSystemCode, *appName, *port, apiYml, requestHandler{contentAPI, umbrellaAPI}, log)
 		}()
 
 		waitForSignal()
 	}
 
-	err = app.Run(os.Args)
+	err := app.Run(os.Args)
 	if err != nil {
 		log.WithError(err).Errorf("%s could not start!", defaultAppName)
 		return
 	}
 }
 
-func serveEndpoints(appSystemCode string, appName string, port string, apiYml *string, requestHandler requestHandler) {
+func serveEndpoints(appSystemCode string, appName string, port string, apiYml *string, requestHandler requestHandler, log *logger.UPPLogger) {
 	healthService := health.NewHealthService(appSystemCode, appName, appDescription,
 		requestHandler.dca, requestHandler.sua)
 
@@ -164,7 +158,7 @@ func serveEndpoints(appSystemCode string, appName string, port string, apiYml *s
 	servicesRouter.HandleFunc("/drafts/content/{uuid}/suggestions",
 		requestHandler.draftContentSuggestionsRequest).Methods("GET")
 
-	monitoringRouter := httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), servicesRouter)
+	monitoringRouter := httphandlers.TransactionAwareRequestLoggingHandler(log, servicesRouter)
 	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
 
 	serveMux.Handle("/", monitoringRouter)
