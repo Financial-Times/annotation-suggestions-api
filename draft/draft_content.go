@@ -52,12 +52,12 @@ type draftContentAPI struct {
 
 func (d *draftContentAPI) FetchDraftContent(ctx context.Context, uuid string) ([]byte, error) {
 	requestPath := d.endpoint + uuid
-	request, err := http.NewRequest(http.MethodGet, requestPath, nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, requestPath, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := d.httpClient.Do(request.WithContext(ctx))
+	response, err := d.httpClient.Do(request)
 	if err != nil {
 		return nil, err
 	}

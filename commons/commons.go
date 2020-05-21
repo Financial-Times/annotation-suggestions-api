@@ -44,7 +44,7 @@ func WriteJSONMessage(w http.ResponseWriter, status int, msg string) error {
 // NewContextFromRequest provides a new context including a trxId
 // from the request or if missing, a brand new trxId.
 func NewContextFromRequest(r *http.Request) context.Context {
-	return tidutils.TransactionAwareContext(context.Background(), tidutils.GetTransactionIDFromRequest(r))
+	return tidutils.TransactionAwareContext(r.Context(), tidutils.GetTransactionIDFromRequest(r))
 }
 
 // ValidateEndpoints provides url/uri level validation, it does not make any actual http(s) requests
