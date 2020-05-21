@@ -127,11 +127,7 @@ func main() {
 			return
 		}
 
-		go func() {
-			serveEndpoints(*appSystemCode, *appName, *port, apiYml, requestHandler{contentAPI, umbrellaAPI})
-		}()
-
-		waitForSignal()
+		serveEndpoints(*appSystemCode, *appName, *port, apiYml, requestHandler{contentAPI, umbrellaAPI})
 	}
 
 	err = app.Run(os.Args)
