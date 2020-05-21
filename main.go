@@ -1,10 +1,10 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -167,24 +167,26 @@ func serveEndpoints(appSystemCode string, appName string, port string, apiYml *s
 
 	server := &http.Server{Addr: ":" + port, Handler: serveMux}
 
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
+	done := make(chan struct{})
 	go func() {
-		if err := server.ListenAndServe(); err != nil {
-			log.WithError(err).Info("HTTP server closing with message")
+		waitForSignal()
+
+		log.Infof("[Shutdown] %s is shutting down", defaultAppName)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			log.WithError(err).Error("Could not gracefully shutdown HTTP server")
 		}
-		wg.Done()
+
+		close(done)
 	}()
 
-	waitForSignal()
-	log.Infof("[Shutdown] %s is shutting down", defaultAppName)
-
-	if err := server.Close(); err != nil {
-		log.WithError(err).Error("Unable to stop http server")
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		log.WithError(err).Fatal("Error starting or closing HTTP server")
 	}
 
-	wg.Wait()
+	<-done
 }
 
 func waitForSignal() {
