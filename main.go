@@ -121,7 +121,7 @@ func main() {
 			return
 		}
 
-		serveEndpoints(*appSystemCode, *appName, *port, apiYml, requestHandler{contentAPI, umbrellaAPI}, log)
+		serveEndpoints(*appSystemCode, *appName, *port, apiYml, requestHandler{contentAPI, umbrellaAPI, log}, log)
 	}
 
 	err := app.Run(os.Args)
