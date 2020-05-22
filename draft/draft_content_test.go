@@ -8,13 +8,10 @@ import (
 	"testing"
 
 	"github.com/Financial-Times/draft-content-suggestions/mocks"
-	log "github.com/sirupsen/logrus"
-	logTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDraftContentAPI_IsGTGSuccess(t *testing.T) {
-	hook := logTest.NewGlobal()
 	testServer := mocks.NewDraftContentTestServer(true)
 	defer testServer.Close()
 
@@ -25,12 +22,9 @@ func TestDraftContentAPI_IsGTGSuccess(t *testing.T) {
 	msg, err := contentAPI.IsGTG(context.Background())
 	assert.NoError(t, err)
 	assert.Equal(t, "draft-content-public-read is healthy", msg)
-	assert.Empty(t, hook.AllEntries())
 }
 
 func TestDraftContentAPI_IsGTGFailure503(t *testing.T) {
-	hook := logTest.NewGlobal()
-
 	testServer := mocks.NewDraftContentTestServer(false)
 	defer testServer.Close()
 
@@ -40,16 +34,9 @@ func TestDraftContentAPI_IsGTGFailure503(t *testing.T) {
 
 	_, err = contentAPI.IsGTG(context.Background())
 	assert.Error(t, err)
-	assert.Len(t, hook.AllEntries(), 1)
-	assert.Equal(t, log.ErrorLevel, hook.LastEntry().Level)
-	assert.Equal(t, "GTG for draft-content-public-read returned a non-200 HTTP status", hook.LastEntry().Message)
-	assert.Equal(t, http.StatusServiceUnavailable, hook.LastEntry().Data["status"])
-	assert.Equal(t, testServer.URL+"/__gtg", hook.LastEntry().Data["healthEndpoint"])
 }
 
 func TestDraftContentAPI_IsGTGFailureInvalidEndpoint(t *testing.T) {
-	hook := logTest.NewGlobal()
-
 	testServer := mocks.NewDraftContentTestServer(false)
 	defer testServer.Close()
 
@@ -63,15 +50,9 @@ func TestDraftContentAPI_IsGTGFailureInvalidEndpoint(t *testing.T) {
 	if assert.Error(t, err) && errors.As(err, &urlErr) {
 		assert.Equal(t, "parse", urlErr.Op)
 	}
-	assert.Len(t, hook.AllEntries(), 1)
-	assert.Equal(t, log.ErrorLevel, hook.LastEntry().Level)
-	assert.Equal(t, "Error in creating GTG request to draft-content-public-read", hook.LastEntry().Message)
-	assert.Equal(t, ":#", hook.LastEntry().Data["healthEndpoint"])
 }
 
 func TestDraftContentAPI_IsGTGFailureRequestError(t *testing.T) {
-	hook := logTest.NewGlobal()
-
 	testServer := mocks.NewDraftContentTestServer(false)
 	defer testServer.Close()
 
@@ -84,15 +65,9 @@ func TestDraftContentAPI_IsGTGFailureRequestError(t *testing.T) {
 	if assert.Error(t, err) && errors.As(err, &urlErr) {
 		assert.Equal(t, "Get", urlErr.Op)
 	}
-
-	assert.Len(t, hook.AllEntries(), 1)
-	assert.Equal(t, log.ErrorLevel, hook.LastEntry().Level)
-	assert.Equal(t, "Error in GTG request to draft-content-public-read", hook.LastEntry().Message)
-	assert.Equal(t, "__gtg", hook.LastEntry().Data["healthEndpoint"])
 }
 
 func TestDraftContentAPI_FetchDraftContentSuccess(t *testing.T) {
-
 	testServer := mocks.NewDraftContentTestServer(true)
 	defer testServer.Close()
 

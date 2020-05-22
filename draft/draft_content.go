@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/Financial-Times/draft-content-suggestions/commons"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -88,23 +87,17 @@ func (d *draftContentAPI) Endpoint() string {
 func (d *draftContentAPI) IsGTG(ctx context.Context) (string, error) {
 	req, err := http.NewRequest(http.MethodGet, d.healthEndpoint, nil)
 	if err != nil {
-		log.WithError(err).WithField("healthEndpoint", d.healthEndpoint).Error("Error in creating GTG request to draft-content-public-read")
-		return "", err
+		return "", fmt.Errorf("error in creating GTG request: %w", err)
 	}
 
-	// We don't want logging for GTG requests in the middleware
 	response, err := d.healthHTTPClient.Do(req.WithContext(ctx))
 	if err != nil {
-		log.WithError(err).WithField("healthEndpoint", d.healthEndpoint).Error("Error in GTG request to draft-content-public-read")
-		return "", err
+		return "", fmt.Errorf("error in GTG request: %w", err)
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		log.WithField("healthEndpoint", d.healthEndpoint).
-			WithField("status", response.StatusCode).
-			Error("GTG for draft-content-public-read returned a non-200 HTTP status")
-		return "", fmt.Errorf("GTG for draft-content-public-read returned a non-200 HTTP status: %v", response.StatusCode)
+		return "", fmt.Errorf("non-200 HTTP response (%v) on GTG request", response.StatusCode)
 	}
 
 	return "draft-content-public-read is healthy", nil
