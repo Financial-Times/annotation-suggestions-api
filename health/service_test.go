@@ -5,19 +5,22 @@ import (
 	"errors"
 	"testing"
 
+	logger "github.com/Financial-Times/go-logger/v2"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestHealthService_HealthSuccess(t *testing.T) {
-
+	log := logger.NewUPPLogger("Test", "PANIC")
 	umbrellaAPI := new(UmbrellaAPI)
 	contentAPI := new(ContentAPI)
 
 	umbrellaAPI.On("IsGTG", context.Background()).Return("good to go here!", nil)
 	contentAPI.On("IsGTG", context.Background()).Return("good to go here!", nil)
+	contentAPI.On("Endpoint").Return("test")
 
-	healthService := NewHealthService("", "", "", contentAPI, umbrellaAPI)
+	healthService := NewService("", "", "", contentAPI, umbrellaAPI, log)
 
 	gtg := healthService.GTG()
 
@@ -25,14 +28,15 @@ func TestHealthService_HealthSuccess(t *testing.T) {
 }
 
 func TestHealthService_HealthPartialFailure(t *testing.T) {
-
+	log := logger.NewUPPLogger("Test", "PANIC")
 	umbrellaAPI := new(UmbrellaAPI)
 	contentAPI := new(ContentAPI)
 
 	umbrellaAPI.On("IsGTG", context.Background()).Return("", errors.New("dying of boredom"))
 	contentAPI.On("IsGTG", context.Background()).Return("good to go here!", nil)
+	contentAPI.On("Endpoint").Return("test")
 
-	healthService := NewHealthService("", "", "", contentAPI, umbrellaAPI)
+	healthService := NewService("", "", "", contentAPI, umbrellaAPI, log)
 
 	gtg := healthService.GTG()
 
@@ -40,14 +44,15 @@ func TestHealthService_HealthPartialFailure(t *testing.T) {
 }
 
 func TestHealthService_HealthFullFailure(t *testing.T) {
-
+	log := logger.NewUPPLogger("Test", "PANIC")
 	umbrellaAPI := new(UmbrellaAPI)
 	contentAPI := new(ContentAPI)
 
 	umbrellaAPI.On("IsGTG", context.Background()).Return("", errors.New("dying of boredom"))
 	contentAPI.On("IsGTG", context.Background()).Return("", errors.New("dying of boredom"))
+	contentAPI.On("Endpoint").Return("test")
 
-	healthService := NewHealthService("", "", "", contentAPI, umbrellaAPI)
+	healthService := NewService("", "", "", contentAPI, umbrellaAPI, log)
 
 	gtg := healthService.GTG()
 

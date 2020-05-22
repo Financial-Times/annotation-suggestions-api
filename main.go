@@ -132,8 +132,8 @@ func main() {
 }
 
 func serveEndpoints(appSystemCode string, appName string, port string, apiYml *string, requestHandler requestHandler, log *logger.UPPLogger) {
-	healthService := health.NewHealthService(appSystemCode, appName, appDescription,
-		requestHandler.dca, requestHandler.sua)
+	healthService := health.NewService(appSystemCode, appName, appDescription,
+		requestHandler.dca, requestHandler.sua, log)
 
 	serveMux := http.NewServeMux()
 
