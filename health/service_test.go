@@ -17,6 +17,7 @@ func TestHealthService_HealthSuccess(t *testing.T) {
 	contentAPI := new(ContentAPI)
 
 	umbrellaAPI.On("IsGTG", context.Background()).Return("good to go here!", nil)
+	umbrellaAPI.On("Endpoint").Return("test")
 	contentAPI.On("IsGTG", context.Background()).Return("good to go here!", nil)
 	contentAPI.On("Endpoint").Return("test")
 
@@ -33,6 +34,7 @@ func TestHealthService_HealthPartialFailure(t *testing.T) {
 	contentAPI := new(ContentAPI)
 
 	umbrellaAPI.On("IsGTG", context.Background()).Return("", errors.New("dying of boredom"))
+	umbrellaAPI.On("Endpoint").Return("test")
 	contentAPI.On("IsGTG", context.Background()).Return("good to go here!", nil)
 	contentAPI.On("Endpoint").Return("test")
 
@@ -49,6 +51,7 @@ func TestHealthService_HealthFullFailure(t *testing.T) {
 	contentAPI := new(ContentAPI)
 
 	umbrellaAPI.On("IsGTG", context.Background()).Return("", errors.New("dying of boredom"))
+	umbrellaAPI.On("Endpoint").Return("test")
 	contentAPI.On("IsGTG", context.Background()).Return("", errors.New("dying of boredom"))
 	contentAPI.On("Endpoint").Return("test")
 

@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/Financial-Times/draft-content-suggestions/commons"
-	log "github.com/sirupsen/logrus"
 )
 
 const APIKeyHeader = "X-Api-Key"
@@ -75,24 +74,19 @@ func (u *umbrellaAPI) Endpoint() string {
 func (u *umbrellaAPI) IsGTG(ctx context.Context) (string, error) {
 	req, err := http.NewRequest(http.MethodGet, u.gtgEndpoint, nil)
 	if err != nil {
-		log.WithError(err).WithField("healthEndpoint", u.gtgEndpoint).Error("Error in creating GTG request to UPP suggestions API")
-		return "", err
+		return "", fmt.Errorf("error creating GTG request: %w", err)
 	}
 
 	req.Header.Set(APIKeyHeader, u.apiKey)
 
 	response, err := u.healthHTTPClient.Do(req.WithContext(ctx))
 	if err != nil {
-		log.WithError(err).WithField("healthEndpoint", u.gtgEndpoint).Error("Error in GTG request to UPP suggestions API")
-		return "", err
+		return "", fmt.Errorf("error sending GTG request: %w", err)
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		log.WithField("healthEndpoint", u.gtgEndpoint).
-			WithField("status", response.StatusCode).
-			Error("GTG for UPP suggestions API returned a non-200 HTTP status")
-		return "", fmt.Errorf("GTG for UPP suggestions API returned a non-200 HTTP status: %d", response.StatusCode)
+		return "", fmt.Errorf("received non-200 HTTP response: %d", response.StatusCode)
 	}
 
 	return "UPP suggestions API is healthy", nil

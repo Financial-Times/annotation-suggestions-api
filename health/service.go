@@ -106,7 +106,12 @@ func (s *Service) draftContentChecker() (string, error) {
 }
 
 func (s *Service) suggestionsChecker() (string, error) {
-	return s.umbrellaAPI.IsGTG(context.Background())
+	res, err := s.umbrellaAPI.IsGTG(context.Background())
+	if err != nil {
+		s.log.WithField("healthEndpoint", s.umbrellaAPI.Endpoint()).WithError(err).Error("UPP Suggestions API GTG check failed")
+	}
+
+	return res, err
 }
 
 func gtgCheck(handler func() (string, error)) gtg.Status {
